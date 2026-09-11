@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 40% 98%;
+  --foreground: 220 26% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 26% 14%;
+  --primary: 222 83% 52%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --border: 214.3 31.8% 91.9%;
+  --input: 214.3 31.8% 91.9%;
+  --ring: 222.2 84% 55%;
+  --radius: 0.9rem;
+}
+
+.dark {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 222 40% 13%;
+  --card-foreground: 210 40% 98%;
+  --primary: 216 100% 72%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 222 30% 18%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 222 30% 18%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 222 30% 18%;
+  --accent-foreground: 210 40% 98%;
+  --border: 217 32% 24%;
+  --input: 217 32% 24%;
+  --ring: 216 100% 72%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    @apply tracking-tight text-foreground;
+  }
+}
+
+@layer components {
+  .container-shell {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-title {
+    @apply text-3xl font-semibold tracking-tight sm:text-4xl;
+  }
+
+  .muted-copy {
+    @apply text-base text-slate-600 dark:text-slate-300;
+  }
+}

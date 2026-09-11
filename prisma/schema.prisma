@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ExperienceLevel {
+  ENTRY
+  MID
+  SENIOR
+  EXPERT
+}
+
+enum JobType {
+  FIXED
+  HOURLY
+}
+
+enum JobStatus {
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum SavedJobPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum SavedJobStatus {
+  SAVED
+  REVIEWING
+  ARCHIVED
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  INTERVIEW
+  OFFER
+  WON
+  DECLINED
+  WITHDRAWN
+}
+
+enum NotificationType {
+  SYSTEM
+  APPLICATION
+  DEADLINE
+  RECOMMENDATION
+}
+
+enum ProposalTone {
+  PROFESSIONAL
+  CONVERSATIONAL
+  CONFIDENT
+}
+
+enum ProposalLength {
+  SHORT
+  MEDIUM
+  LONG
+}
+
+enum Theme {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile       Profile?
+  skills        Skill[]
+  portfolio     PortfolioProject[]
+  savedJobs     SavedJob[]
+  jobAnalyses   JobAnalysis[]
+  proposals     Proposal[]
+  applications  Application[]
+  notifications Notification[]
+  preferences   UserPreference?
+
+  @@index([createdAt])
+}
+
+model Profile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  professionalTitle  String?
+  overview           String?
+  hourlyRate         Int?
+  experienceLevel    ExperienceLevel?
+  location           String?
+  availability       String?
+  primaryCategory    String?
+  profileCompleteness Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Skill {
+  id          String @id @default(cuid())
+  userId      String
+  name        String
+  category    String?
+  demand      String? 
+  matchScore  Int?
+  createdAt   DateTime @default(now())
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([category])
+}
+
+model PortfolioProject {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String
+  technologies String[]
+  projectUrl  String?
+  githubUrl   String?
+  role        String?
+  skillsUsed  String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, title])
+  @@index([userId])
+}
+
+model Job {
+  id               String   @id @default(cuid())
+  title            String
+  clientName       String?
+  category         String?
+  description      String
+  requirements     String[]
+  questions        String[]
+  budgetMin        Int?
+  budgetMax        Int?
+  type             JobType?
+  experienceLevel  ExperienceLevel?
+  status           JobStatus       @default(OPEN)
+  location         String?
+  remote           Boolean @default(false)
+  clientRating     Float?
+  postedAt         DateTime?
+  deadlineAt       DateTime?
+  sourceUrl        String?  @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  skills           JobSkill[]
+  analyses         JobAnalysis[]
+  applications     Application[]
+  proposals        Proposal[]
+  savedJobs        SavedJob[]
+
+  @@index([category, remote, status])
+  @@index([experienceLevel])
+  @@index([createdAt])
+}
+
+model JobSkill {
+  id        String @id @default(cuid())
+  jobId     String
+  name      String
+  createdAt DateTime @default(now())
+
+  job       Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, name])
+  @@index([jobId])
+}
+
+model SavedJob {
+  id          String   @id @default(cuid())
+  userId      String
+  jobId       String
+  priority    SavedJobPriority @default(MEDIUM)
+  notes       String?
+  status      SavedJobStatus @default(SAVED)
+  deadlineAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job         Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([userId, priority, status])
+}
+
+model JobAnalysis {
+  id                 String   @id @default(cuid())
+  userId             String
+  jobId              String
+  matchScore         Int
+  technicalMatch     Int
+  experienceMatch    Int
+  portfolioMatch     Int
+  recommendation     String
+  matchedSkills      String[]
+  missingSkills      String[]
+  risks              String[]
+  reasoning          String
+  proposalStrategy   String
+  createdAt          DateTime @default(now())
+
+  user               User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job                Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([jobId])
+}
+
+model Proposal {
+  id              String   @id @default(cuid())
+  userId          String
+  jobId           String?
+  title           String?
+  content         String
+  tone            ProposalTone
+  length          ProposalLength
+  qualityScore    Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job             Job? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  applications    Application[]
+
+  @@index([userId, createdAt])
+}
+
+model Application {
+  id             String   @id @default(cuid())
+  userId         String
+  jobId          String
+  clientName     String?
+  proposalId     String?
+  status         ApplicationStatus @default(DRAFT)
+  expectedValue  Int?
+  appliedAt      DateTime?
+  interviewAt    DateTime?
+  followUpAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job            Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  proposal       Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
+  notes          ApplicationNote[]
+
+  @@unique([userId, jobId])
+  @@index([userId, status])
+}
+
+model ApplicationNote {
+  id           String   @id @default(cuid())
+  applicationId String
+  content      String
+  createdAt    DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  message     String
+  type        NotificationType
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
+
+model UserPreference {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  theme               Theme    @default(SYSTEM)
+  defaultAiProvider   String   @default("none")
+  defaultModel        String?
+  defaultProposalTone ProposalTone @default(PROFESSIONAL)
+  defaultProposalLength ProposalLength @default(MEDIUM)
+  notificationsEnabled Boolean @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
